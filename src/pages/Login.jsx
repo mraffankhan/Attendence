@@ -42,76 +42,77 @@ export default function Login() {
 
     return (
         <div className="login-container">
-            <div className="glass-panel login-box">
+            <div className="login-box">
                 <div className="login-header">
-                    <div className="icon-wrapper">
-                        <Camera size={32} className="logoIcon" />
+                    <div className="logo-container">
+                        <div className="icon-wrapper">
+                            <Camera size={36} strokeWidth={1.5} />
+                        </div>
                     </div>
                     <h2>AIAttend</h2>
-                    <p className="page-description">AI-Powered Attendance System</p>
+                    <p className="page-description">Welcome to the future of smart tracking.</p>
                 </div>
 
-                <div className="flex rounded-md p-1 mb-2" style={{ backgroundColor: 'var(--surface-color)', border: '1px solid var(--border-color)' }}>
+                <div className="role-toggle">
+                    <div className={`role-indicator ${loginType === 'faculty' ? 'faculty' : ''}`} />
                     <button
                         type="button"
-                        className="flex-1 py-2 text-sm rounded transition-all"
-                        style={{
-                            backgroundColor: loginType === 'student' ? 'var(--primary-color)' : 'transparent',
-                            color: loginType === 'student' ? 'white' : 'var(--text-secondary)'
-                        }}
+                        className={`role-btn ${loginType === 'student' ? 'active' : ''}`}
                         onClick={() => setLoginType('student')}
                     >
                         Student
                     </button>
                     <button
                         type="button"
-                        className="flex-1 py-2 text-sm rounded transition-all"
-                        style={{
-                            backgroundColor: loginType === 'faculty' ? 'var(--primary-color)' : 'transparent',
-                            color: loginType === 'faculty' ? 'white' : 'var(--text-secondary)'
-                        }}
+                        className={`role-btn ${loginType === 'faculty' ? 'active' : ''}`}
                         onClick={() => setLoginType('faculty')}
                     >
                         Faculty
                     </button>
                 </div>
 
-                <form onSubmit={handleAuth} className="flex flex-col gap-4">
+                <form onSubmit={handleAuth} className="flex flex-col gap-3 mt-2">
                     {error && <div className="error-msg">{error}</div>}
 
                     {isRegister && (
+                        <div className="input-group">
+                            <input
+                                type="text"
+                                placeholder="Full Name"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                required
+                            />
+                        </div>
+                    )}
+                    <div className="input-group">
                         <input
-                            type="text"
-                            placeholder="Full Name"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
+                            type="email"
+                            placeholder="Email Address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                         />
-                    )}
-                    <input
-                        type="email"
-                        placeholder="Email Address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                    </div>
+                    <div className="input-group">
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
 
-                    <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+                    <button type="submit" className="btn btn-login" disabled={loading}>
                         {loading ? 'Processing...' : (isRegister ? 'Sign Up' : 'Sign In')}
                     </button>
                 </form>
 
                 <div className="login-footer">
-                    <button type="button" onClick={() => setIsRegister(!isRegister)} className="auth-switch">
-                        {isRegister ? 'Already have an account? Sign in' : 'Need an account? Sign up (Demo mode)'}
-                    </button>
+                    <a href="mailto:rnxkhan@gmail.com?subject=Password%20Reset%20Request" className="auth-switch">
+                        Forgot password? <span>Contact Admin</span>
+                    </a>
                 </div>
             </div>
         </div>
