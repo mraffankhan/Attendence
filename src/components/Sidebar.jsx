@@ -1,13 +1,18 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Camera, LayoutDashboard, User, LogOut, BookOpen } from 'lucide-react';
+import { Camera, LayoutDashboard, Menu as MenuIcon, User, LogOut, BookOpen } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-const Sidebar = ({ user, handleLogout }) => {
+const Sidebar = ({ user, handleLogout, isOpen, toggleSidebar }) => {
     return (
-        <aside className={styles.sidebar}>
-            <div className={styles.logo}>
-                <Camera className={styles.logoIcon} size={28} />
-                AIAttend
+        <aside className={`${styles.sidebar} ${isOpen ? '' : styles.closed}`}>
+            <div className={styles.sidebarHeader}>
+                <div className={styles.logo}>
+                    <Camera className={styles.logoIcon} size={28} />
+                    AIAttend
+                </div>
+                <button onClick={toggleSidebar} className={styles.toggleBtn} title="Toggle Sidebar">
+                    <MenuIcon size={24} />
+                </button>
             </div>
 
             <nav className={styles.nav}>
@@ -16,14 +21,14 @@ const Sidebar = ({ user, handleLogout }) => {
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <LayoutDashboard size={20} />
-                    Dashboard
+                    <span>Dashboard</span>
                 </NavLink>
                 <NavLink
                     to="/courses"
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <BookOpen size={20} />
-                    Courses
+                    <span>Courses</span>
                 </NavLink>
             </nav>
 

@@ -1,13 +1,18 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Camera, LayoutDashboard, Menu, Users, LogOut, Settings, CalendarDays } from 'lucide-react';
+import { Camera, LayoutDashboard, Menu as MenuIcon, Users, LogOut, Settings, CalendarDays } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-const SuperAdminSidebar = ({ user, handleLogout }) => {
+const SuperAdminSidebar = ({ user, handleLogout, isOpen, toggleSidebar }) => {
     return (
-        <aside className={styles.sidebar}>
-            <div className={styles.logo}>
-                <Camera className={styles.logoIcon} size={28} />
-                Admin Portal
+        <aside className={`${styles.sidebar} ${isOpen ? '' : styles.closed}`}>
+            <div className={styles.sidebarHeader}>
+                <div className={styles.logo}>
+                    <Camera className={styles.logoIcon} size={28} />
+                    Admin Portal
+                </div>
+                <button onClick={toggleSidebar} className={styles.toggleBtn} title="Toggle Sidebar">
+                    <MenuIcon size={24} />
+                </button>
             </div>
 
             <nav className={styles.nav}>
@@ -16,28 +21,28 @@ const SuperAdminSidebar = ({ user, handleLogout }) => {
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <LayoutDashboard size={20} />
-                    Overview
+                    <span>Overview</span>
                 </NavLink>
                 <NavLink
                     to="/superadmin/users"
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <Users size={20} />
-                    Manage Users
+                    <span>Manage Users</span>
                 </NavLink>
                 <NavLink
                     to="/superadmin/courses"
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
-                    <Menu size={20} />
-                    Manage Courses
+                    <MenuIcon size={20} />
+                    <span>Manage Courses</span>
                 </NavLink>
                 <NavLink
                     to="/superadmin/timetable"
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <CalendarDays size={20} />
-                    Timetables
+                    <span>Timetables</span>
                 </NavLink>
             </nav>
 

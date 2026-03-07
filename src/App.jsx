@@ -22,6 +22,9 @@ function App() {
   const [session, setSession] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -83,11 +86,11 @@ function App() {
     <Router>
       <div className="app-layout">
         {role === 'super_admin' ? (
-          <SuperAdminSidebar user={session.user} handleLogout={handleLogout} />
+          <SuperAdminSidebar user={session.user} handleLogout={handleLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         ) : role === 'teacher' ? (
-          <AdminSidebar user={session.user} handleLogout={handleLogout} />
+          <AdminSidebar user={session.user} handleLogout={handleLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         ) : (
-          <Sidebar user={session.user} handleLogout={handleLogout} />
+          <Sidebar user={session.user} handleLogout={handleLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         )}
 
         <Routes>

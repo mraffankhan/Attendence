@@ -1,13 +1,18 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Camera, LayoutDashboard, Menu, Users, LogOut, Settings } from 'lucide-react';
+import { Camera, LayoutDashboard, Menu as MenuIcon, Users, LogOut, Settings } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-const AdminSidebar = ({ user, handleLogout }) => {
+const AdminSidebar = ({ user, handleLogout, isOpen, toggleSidebar }) => {
     return (
-        <aside className={styles.sidebar}>
-            <div className={styles.logo}>
-                <Camera className={styles.logoIcon} size={28} />
-                AIAttend Admin
+        <aside className={`${styles.sidebar} ${isOpen ? '' : styles.closed}`}>
+            <div className={styles.sidebarHeader}>
+                <div className={styles.logo}>
+                    <Camera className={styles.logoIcon} size={28} />
+                    AIAttend Admin
+                </div>
+                <button onClick={toggleSidebar} className={styles.toggleBtn} title="Toggle Sidebar">
+                    <MenuIcon size={24} />
+                </button>
             </div>
 
             <nav className={styles.nav}>
@@ -16,28 +21,28 @@ const AdminSidebar = ({ user, handleLogout }) => {
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <LayoutDashboard size={20} />
-                    Dashboard
+                    <span>Dashboard</span>
                 </NavLink>
                 <NavLink
                     to="/admin/monitor"
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <Camera size={20} />
-                    Monitor Camera
+                    <span>Monitor Camera</span>
                 </NavLink>
                 <NavLink
                     to="/admin/courses"
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
-                    <Menu size={20} />
-                    Manage Courses
+                    <MenuIcon size={20} />
+                    <span>Manage Courses</span>
                 </NavLink>
                 <NavLink
                     to="/admin/students"
                     className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
                 >
                     <Users size={20} />
-                    Students
+                    <span>Students</span>
                 </NavLink>
             </nav>
 
