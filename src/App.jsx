@@ -46,7 +46,7 @@ function App() {
 
   const fetchRole = async (user) => {
     try {
-      const { data, error } = await supabase.from('users').select('role').eq('id', user.id).single();
+      const { data, error } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle();
       const loginType = localStorage.getItem('loginType') || 'student';
 
       if (user.email === 'rnxkhan@gmail.com') {
