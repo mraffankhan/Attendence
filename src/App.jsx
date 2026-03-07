@@ -99,7 +99,7 @@ function App() {
               <Route path="/superadmin/dashboard" element={<div className="main-content"><div className="page-header"><h1 className="page-title">System Overview</h1><p className="page-description">Welcome to the core system controls.</p></div></div>} />
               <Route path="/superadmin/users" element={<ManageUsers />} />
               <Route path="/superadmin/timetable" element={<Timetable />} />
-              <Route path="/superadmin/courses" element={<Courses role="teacher" />} />
+              <Route path="/superadmin/courses" element={<Courses role="super_admin" />} />
               <Route path="*" element={<Navigate to="/superadmin/dashboard" replace />} />
             </>
           ) : role === 'teacher' ? (
