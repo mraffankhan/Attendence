@@ -1,0 +1,110 @@
+.sidebar {
+    width: 260px;
+    background-color: var(--surface-color);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+    color: white;
+}
+
+.logoIcon {
+    color: var(--primary-color);
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.navItem:hover {
+    background-color: var(--surface-color-light);
+    color: var(--text-primary);
+    transform: translateX(4px);
+}
+
+.active {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+}
+
+.userProfile {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-color-hover));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.userDetails {
+    display: flex;
+    flex-direction: column;
+}
+
+.userName {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.userRole {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.logoutBtn {
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+}
+
+.logoutBtn:hover {
+    color: var(--error-color);
+    background-color: rgba(239, 68, 68, 0.1);
+}
