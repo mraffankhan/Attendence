@@ -6,13 +6,76 @@ const Courses = ({ role }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Demo data for now
-        setCourses([
-            { id: 1, name: 'Introduction to AI', code: 'CS101', students: 45 },
-            { id: 2, name: 'Machine Learning Basics', code: 'CS202', students: 30 }
-        ]);
-        setLoading(false);
-    }, []);
+        fetchCourses();
+    }, [role]);
+
+    const fetchCourses = async () => {
+        try {
+            setLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
+            let fetchedCourses = [];
+
+            if (role === 'teacher') {
+                // Fetch all courses and their enrollment counts
+                const { data: coursesData, error } = await supabase
+                    .from('courses')
+                    .select(`
+                        id, name, code,
+                        enrollments (count)
+                    `);
+
+                if (coursesData) {
+                    fetchedCourses = coursesData.map(c => ({
+                        id: c.id,
+                        name: c.name,
+                        code: c.code,
+                        students: c.enrollments?.[0]?.count || 0
+                    }));
+                }
+            } else {
+                // Fetch student's enrolled courses
+                const { data: myEnrs } = await supabase
+                    .from('enrollments')
+                    .select('course_id, courses(id, name, code)')
+                    .eq('student_id', user.id);
+
+                if (myEnrs && myEnrs.length > 0) {
+                    const courseIds = myEnrs.map(e => e.course_id);
+
+                    // Fetch total student counts for those specific courses
+                    const { data: countsData } = await supabase
+                        .from('courses')
+                        .select('id, enrollments(count)')
+                        .in('id', courseIds);
+
+                    const countMap = {};
+                    if (countsData) {
+                        countsData.forEach(c => {
+                            countMap[c.id] = c.enrollments?.[0]?.count || 0;
+                        });
+                    }
+
+                    fetchedCourses = myEnrs.map(e => ({
+                        id: e.courses.id,
+                        name: e.courses.name,
+                        code: e.courses.code,
+                        students: countMap[e.courses.id] || 0
+                    }));
+                }
+            }
+
+            setCourses(fetchedCourses);
+        } catch (error) {
+            console.error('Error fetching courses:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="main-content">
