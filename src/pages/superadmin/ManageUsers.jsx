@@ -29,9 +29,14 @@ const ManageUsers = () => {
         e.preventDefault();
         setMsg('Creating...');
         try {
-            // NOTE: For demo, users log in themselves to trigger auth trigger, 
-            // or we use Admin API. Since we don't have Admin API loaded on client, 
-            // we'll attempt a normal signup.
+            // Because we are using the client-side signUp method, Supabase will log out the Super Admin
+            // and log in as the new user. This is a known limitation of the client-side library.
+            // To fix this without an Edge Function, we must capture the new user ID, then restore the Admin session.
+
+            // 1. Cache current admin session
+            const { data: { session: adminSession } } = await supabase.auth.getSession();
+
+            // 2. Create the new user (This logs out the admin and logs in the new user)
             const { data, error } = await supabase.auth.signUp({
                 email, password,
                 options: { data: { role, full_name: fullName } }
@@ -39,13 +44,25 @@ const ManageUsers = () => {
 
             if (error) throw error;
 
-            // Also manually insert into our public table for immediate visibility
-            // (Typically handled by Supabase Auth Triggers)
+            // 3. Insert into the public users table using the NEW user's temporary session
             if (data.user) {
-                await supabase.from('users').insert({
+                const { error: insertErr } = await supabase.from('users').insert({
                     id: data.user.id,
                     full_name: fullName || email.split('@')[0],
                     role: role
+                });
+
+                if (insertErr) throw insertErr;
+            }
+
+            // 4. Log out the new user
+            await supabase.auth.signOut();
+
+            // 5. Restore the Super Admin session
+            if (adminSession) {
+                await supabase.auth.setSession({
+                    access_token: adminSession.access_token,
+                    refresh_token: adminSession.refresh_token
                 });
             }
 
