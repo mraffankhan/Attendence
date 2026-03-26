@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import api from '../lib/api';
 import { Camera } from 'lucide-react';
 
-export default function Login() {
-    const [loginType, setLoginType] = useState('student'); // 'student' | 'faculty'
+export default function Login({ onLoginSuccess }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isRegister, setIsRegister] = useState(false);
     const [error, setError] = useState(null);
 
     const handleAuth = async (e) => {
@@ -16,25 +13,16 @@ export default function Login() {
         setLoading(true);
         setError(null);
         try {
-            if (isRegister) {
-                // Simple sign-up Flow
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                });
-                if (error) throw error;
-
-                // Wait, normally we'd insert into `users` table via trigger or here.
-                // For simplicity, we just notify
-                alert('Account created! You can now sign in.');
-                setIsRegister(false);
-            } else {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                localStorage.setItem('loginType', loginType);
-            }
+            // Login Flow
+            const { data } = await api.post('/auth/login', { email, password });
+            localStorage.setItem('token', data.token);
+            
+            // Login logic no longer needs the Toggle for Role, it's determined by backend response automatically
+            localStorage.setItem('loginType', data.user.role === 'teacher' ? 'faculty' : 'student');
+            
+            if (onLoginSuccess) onLoginSuccess();
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message);
         } finally {
             setLoading(false);
         }
@@ -53,38 +41,9 @@ export default function Login() {
                     <p className="page-description">Welcome to the future of smart tracking.</p>
                 </div>
 
-                <div className="role-toggle">
-                    <div className={`role-indicator ${loginType === 'faculty' ? 'faculty' : ''}`} />
-                    <button
-                        type="button"
-                        className={`role-btn ${loginType === 'student' ? 'active' : ''}`}
-                        onClick={() => setLoginType('student')}
-                    >
-                        Student
-                    </button>
-                    <button
-                        type="button"
-                        className={`role-btn ${loginType === 'faculty' ? 'active' : ''}`}
-                        onClick={() => setLoginType('faculty')}
-                    >
-                        Faculty
-                    </button>
-                </div>
-
-                <form onSubmit={handleAuth} className="flex flex-col gap-3 mt-2">
+                <form onSubmit={handleAuth} className="flex flex-col gap-3 mt-4">
                     {error && <div className="error-msg">{error}</div>}
 
-                    {isRegister && (
-                        <div className="input-group">
-                            <input
-                                type="text"
-                                placeholder="Full Name"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                required
-                            />
-                        </div>
-                    )}
                     <div className="input-group">
                         <input
                             type="email"
@@ -105,8 +64,9 @@ export default function Login() {
                     </div>
 
                     <button type="submit" className="btn btn-login" disabled={loading}>
-                        {loading ? 'Processing...' : (isRegister ? 'Sign Up' : 'Sign In')}
+                        {loading ? 'Processing...' : 'Sign In'}
                     </button>
+                    
                 </form>
 
                 <div className="login-footer">

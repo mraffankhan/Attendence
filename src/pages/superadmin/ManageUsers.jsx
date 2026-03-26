@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import api from '../../lib/api';
 import { Plus, Trash2 } from 'lucide-react';
 
 const ManageUsers = () => {
@@ -18,59 +18,32 @@ const ManageUsers = () => {
     }, []);
 
     const fetchUsers = async () => {
-        // In a real app we'd need an Edge Function or Service Role Key to list auth users.
-        // For this demo, we can just list from the `users` table
-        const { data } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-        if (data) setUsers(data);
-        setLoading(false);
+        try {
+            const { data } = await api.get('/users');
+            setUsers(data);
+        } catch (error) {
+            console.error('Failed to fetch users:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCreateUser = async (e) => {
         e.preventDefault();
         setMsg('Creating...');
         try {
-            // Because we are using the client-side signUp method, Supabase will log out the Super Admin
-            // and log in as the new user. This is a known limitation of the client-side library.
-            // To fix this without an Edge Function, we must capture the new user ID, then restore the Admin session.
-
-            // 1. Cache current admin session
-            const { data: { session: adminSession } } = await supabase.auth.getSession();
-
-            // 2. Create the new user (This logs out the admin and logs in the new user)
-            const { data, error } = await supabase.auth.signUp({
-                email, password,
-                options: { data: { role, full_name: fullName } }
+            await api.post('/auth/register', {
+                email,
+                password,
+                full_name: fullName || email.split('@')[0],
+                role
             });
-
-            if (error) throw error;
-
-            // 3. Insert into the public users table using the NEW user's temporary session
-            if (data.user) {
-                const { error: insertErr } = await supabase.from('users').insert({
-                    id: data.user.id,
-                    full_name: fullName || email.split('@')[0],
-                    role: role
-                });
-
-                if (insertErr) throw insertErr;
-            }
-
-            // 4. Log out the new user
-            await supabase.auth.signOut();
-
-            // 5. Restore the Super Admin session
-            if (adminSession) {
-                await supabase.auth.setSession({
-                    access_token: adminSession.access_token,
-                    refresh_token: adminSession.refresh_token
-                });
-            }
 
             setMsg(`Success! Created ${role}`);
             setEmail(''); setPassword(''); setFullName('');
             fetchUsers();
         } catch (err) {
-            setMsg(`Error: ${err.message}`);
+            setMsg(`Error: ${err.response?.data?.message || err.message}`);
         }
     };
 
@@ -94,7 +67,6 @@ const ManageUsers = () => {
                         <select value={role} onChange={e => setRole(e.target.value)} required>
                             <option value="student">Student</option>
                             <option value="teacher">Faculty / Teacher</option>
-                            <option value="admin">System Admin</option>
                         </select>
 
                         <button type="submit" className="btn btn-primary w-full mt-2">

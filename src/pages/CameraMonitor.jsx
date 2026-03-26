@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as faceapi from 'face-api.js';
-import { supabase } from '../lib/supabase';
 import { Camera, RefreshCw, UserCheck } from 'lucide-react';
 
 const CameraMonitor = () => {

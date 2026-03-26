@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import api from '../lib/api';
 import { BookOpen, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 const Dashboard = () => {
@@ -14,26 +14,13 @@ const Dashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            // 1. Fetch user's enrollments with course details
-            const { data: enrollments } = await supabase
-                .from('enrollments')
-                .select('course_id, courses(name, code)')
-                .eq('student_id', user.id);
+            const { data } = await api.get('/users/dashboard');
+            const { enrollments, attendanceData } = data;
 
             if (!enrollments || enrollments.length === 0) {
                 setLoading(false);
                 return;
             }
-
-            // 2. Fetch all attendance records for this student
-            const { data: attendanceData } = await supabase
-                .from('attendance')
-                .select('status, enter_time, sessions(id, date, course_id, courses(name))')
-                .eq('student_id', user.id)
-                .order('enter_time', { ascending: false });
 
             // Calculate stats
             let totalClasses = 0;
@@ -43,8 +30,8 @@ const Dashboard = () => {
             enrollments.forEach(en => {
                 courseMap[en.course_id] = {
                     id: en.course_id,
-                    name: en.courses.name,
-                    code: en.courses.code,
+                    name: en.name,
+                    code: en.code,
                     total: 0,
                     present: 0
                 };
@@ -54,7 +41,7 @@ const Dashboard = () => {
 
             if (attendanceData) {
                 attendanceData.forEach(record => {
-                    const cId = record.sessions?.course_id;
+                    const cId = record.course_id;
                     if (cId && courseMap[cId]) {
                         courseMap[cId].total += 1;
                         totalClasses += 1;
@@ -65,9 +52,9 @@ const Dashboard = () => {
 
                         if (recent.length < 5) {
                             recent.push({
-                                id: record.sessions.id,
-                                courseName: record.sessions.courses?.name || 'Unknown',
-                                date: record.sessions.date,
+                                id: record.session_id,
+                                courseName: record.courseName || 'Unknown',
+                                date: record.date,
                                 status: record.status,
                                 time: record.enter_time
                             });

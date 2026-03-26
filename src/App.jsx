@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './lib/supabase';
+import api from './lib/api';
 
 // Pages
 import Login from './pages/Login';
@@ -27,65 +27,50 @@ function App() {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchRole(session.user);
-      else setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) fetchRole(session.user);
-      else {
-        setRole(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    checkSession();
   }, []);
 
-  const fetchRole = async (user) => {
-    try {
-      const { data, error } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle();
-      const loginType = localStorage.getItem('loginType') || 'student';
+  const checkSession = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-      if (user.email === 'rnxkhan@gmail.com') {
-        // Admin user directly gets super admin portal
-        setRole('super_admin');
-      } else if (data && data.role) {
-        setRole(data.role);
-      } else {
-        // Fallback for unconfigured accounts
-        setRole(loginType === 'faculty' ? 'teacher' : 'student');
-      }
-    } catch (e) {
-      console.error(e);
-      const loginType = localStorage.getItem('loginType') || 'student';
-      setRole(user.email === 'rnxkhan@gmail.com' ? 'super_admin' : 'student');
+    try {
+      const { data } = await api.get('/auth/me');
+      setSession({ user: data.user });
+      setRole(data.user.role);
+    } catch (err) {
+      console.error('Session expired or invalid:', err);
+      localStorage.removeItem('token');
+      setSession(null);
+      setRole(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('loginType');
+    setSession(null);
+    setRole(null);
   };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
+  // Passing setSession down so Login can update Auth State immediately
   if (!session) {
-    return <Login />;
+    return <Login onLoginSuccess={checkSession} />;
   }
 
   return (
     <Router>
       <div className="app-layout">
-        {role === 'super_admin' ? (
+        {(role === 'super_admin' || role === 'admin') ? (
           <SuperAdminSidebar user={session.user} handleLogout={handleLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         ) : role === 'teacher' ? (
           <AdminSidebar user={session.user} handleLogout={handleLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
@@ -94,7 +79,7 @@ function App() {
         )}
 
         <Routes>
-          {role === 'super_admin' ? (
+          {(role === 'super_admin' || role === 'admin') ? (
             <>
               <Route path="/superadmin/dashboard" element={<div className="main-content"><div className="page-header"><h1 className="page-title">System Overview</h1><p className="page-description">Welcome to the core system controls.</p></div></div>} />
               <Route path="/superadmin/users" element={<ManageUsers />} />
@@ -106,7 +91,7 @@ function App() {
             <>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/monitor" element={<CameraMonitor />} />
-              <Route path="/admin/courses" element={<Courses role="teacher" />} />
+              <Route path="/admin/courses" element={<Courses role="teacher" /> } />
               <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </>
           ) : (

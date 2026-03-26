@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import api from '../lib/api';
 import { Plus, X } from 'lucide-react';
 
 const Courses = ({ role }) => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState(null);
 
     // Modal state for Super Admin creating a course
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -23,91 +22,19 @@ const Courses = ({ role }) => {
     }, [role]);
 
     const fetchTeachers = async () => {
-        const { data } = await supabase.from('users').select('id, full_name, email').eq('role', 'teacher');
-        if (data) setTeachers(data);
+        try {
+            const { data } = await api.get('/users');
+            setTeachers(data.filter(u => u.role === 'teacher'));
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const fetchCourses = async () => {
         try {
             setLoading(true);
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setLoading(false);
-                return;
-            }
-            setCurrentUser(user);
-
-            let fetchedCourses = [];
-
-            if (role === 'super_admin') {
-                // Super Admin sees ALL courses
-                const { data: coursesData } = await supabase
-                    .from('courses')
-                    .select(`
-                        id, name, code, teacher_id,
-                        users (full_name),
-                        enrollments (count)
-                    `);
-
-                if (coursesData) {
-                    fetchedCourses = coursesData.map(c => ({
-                        id: c.id,
-                        name: c.name,
-                        code: c.code,
-                        teacher_name: c.users?.full_name || 'Unassigned',
-                        students: c.enrollments?.[0]?.count || 0
-                    }));
-                }
-            } else if (role === 'teacher') {
-                // Teacher only sees THEIR assigned courses
-                const { data: coursesData } = await supabase
-                    .from('courses')
-                    .select(`
-                        id, name, code,
-                        enrollments (count)
-                    `)
-                    .eq('teacher_id', user.id);
-
-                if (coursesData) {
-                    fetchedCourses = coursesData.map(c => ({
-                        id: c.id,
-                        name: c.name,
-                        code: c.code,
-                        students: c.enrollments?.[0]?.count || 0
-                    }));
-                }
-            } else {
-                // Student sees their enrolled courses
-                const { data: myEnrs } = await supabase
-                    .from('enrollments')
-                    .select('course_id, courses(id, name, code)')
-                    .eq('student_id', user.id);
-
-                if (myEnrs && myEnrs.length > 0) {
-                    const courseIds = myEnrs.map(e => e.course_id);
-
-                    const { data: countsData } = await supabase
-                        .from('courses')
-                        .select('id, enrollments(count)')
-                        .in('id', courseIds);
-
-                    const countMap = {};
-                    if (countsData) {
-                        countsData.forEach(c => {
-                            countMap[c.id] = c.enrollments?.[0]?.count || 0;
-                        });
-                    }
-
-                    fetchedCourses = myEnrs.map(e => ({
-                        id: e.courses.id,
-                        name: e.courses.name,
-                        code: e.courses.code,
-                        students: countMap[e.courses.id] || 0
-                    }));
-                }
-            }
-
-            setCourses(fetchedCourses);
+            const { data } = await api.get('/courses');
+            setCourses(data);
         } catch (error) {
             console.error('Error fetching courses:', error);
         } finally {
@@ -119,13 +46,11 @@ const Courses = ({ role }) => {
         e.preventDefault();
         setCreateMsg('Creating...');
         try {
-            const { error } = await supabase.from('courses').insert({
+            await api.post('/courses', {
                 name: newCourseName,
                 code: newCourseCode,
                 teacher_id: selectedTeacherId || null
             });
-
-            if (error) throw error;
 
             setCreateMsg('Course created successfully!');
             setNewCourseName('');
@@ -137,7 +62,7 @@ const Courses = ({ role }) => {
                 fetchCourses();
             }, 1000);
         } catch (err) {
-            setCreateMsg(`Error: ${err.message}`);
+            setCreateMsg(`Error: ${err.response?.data?.message || err.message}`);
         }
     };
 
@@ -172,7 +97,7 @@ const Courses = ({ role }) => {
                                 <span className="page-description flex-1">{course.code}</span>
                                 {role === 'super_admin' && (
                                     <span style={{ fontSize: '0.8rem', backgroundColor: 'var(--surface-color-light)', padding: '0.2rem 0.6rem', borderRadius: '1rem', color: 'var(--text-secondary)' }}>
-                                        {course.teacher_name}
+                                        {course.teacher_name || 'Unassigned'}
                                     </span>
                                 )}
                             </div>

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
 import { Plus } from 'lucide-react';
 
 const Timetable = () => {
