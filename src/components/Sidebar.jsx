@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Camera, LayoutDashboard, Menu as MenuIcon, User, LogOut, BookOpen } from 'lucide-react';
+import { Camera, LayoutDashboard, Menu as MenuIcon, User, LogOut, BookOpen, Calendar as CalendarIcon } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 const Sidebar = ({ user, handleLogout, isOpen, toggleSidebar }) => {
@@ -29,6 +29,13 @@ const Sidebar = ({ user, handleLogout, isOpen, toggleSidebar }) => {
                 >
                     <BookOpen size={20} />
                     <span>Courses</span>
+                </NavLink>
+                <NavLink
+                    to="/timetable"
+                    className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
+                >
+                    <CalendarIcon size={20} />
+                    <span>Timetable</span>
                 </NavLink>
             </nav>
 

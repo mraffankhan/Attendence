@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/db.js';
 import { protect } from '../middleware/authMiddleware.js';
+import path from 'path';
 
 const router = express.Router();
 
@@ -38,8 +39,19 @@ router.post('/register', protect, async (req, res) => {
     return res.status(403).json({ message: 'Unauthorized. Only Admins can create accounts.' });
   }
 
-  const { full_name, email, password, role } = req.body;
+  const { full_name, email, password, role, face_descriptor } = req.body;
+  let photo_url = null;
+
   try {
+    if (req.files && req.files.photo) {
+      const photo = Array.isArray(req.files.photo) ? req.files.photo[0] : req.files.photo;
+      const fileName = `${uuidv4()}${path.extname(photo.name)}`;
+      const uploadPath = path.join(process.cwd(), 'uploads', fileName);
+      
+      await photo.mv(uploadPath);
+      photo_url = `/uploads/${fileName}`;
+    }
+
     const [existing] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
     if (existing.length > 0) return res.status(400).json({ message: 'User already exists' });
     
@@ -47,13 +59,20 @@ router.post('/register', protect, async (req, res) => {
     const password_hash = await bcrypt.hash(password, salt);
     
     const id = uuidv4();
+    
+    let processedDescriptor = null;
+    if (face_descriptor && face_descriptor !== 'undefined' && face_descriptor !== 'null') {
+      processedDescriptor = typeof face_descriptor === 'string' ? face_descriptor : JSON.stringify(face_descriptor);
+    }
+
     await db.execute(
-      'INSERT INTO users (id, full_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      [id, full_name, email, password_hash, role || 'student']
+      'INSERT INTO users (id, full_name, email, password_hash, role, photo_url, face_descriptor) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, full_name, email, password_hash, role || 'student', photo_url, processedDescriptor]
     );
     
-    res.status(201).json({ message: 'User created' });
+    res.status(201).json({ message: 'User created', id });
   } catch (err) {
+    console.error('Registration error:', err);
     res.status(500).json({ message: err.message });
   }
 });

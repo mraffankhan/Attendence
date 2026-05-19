@@ -16,9 +16,7 @@ export default function Login({ onLoginSuccess }) {
             // Login Flow
             const { data } = await api.post('/auth/login', { email, password });
             localStorage.setItem('token', data.token);
-            
-            // Login logic no longer needs the Toggle for Role, it's determined by backend response automatically
-            localStorage.setItem('loginType', data.user.role === 'teacher' ? 'faculty' : 'student');
+            localStorage.setItem('loginType', data.user.role);
             
             if (onLoginSuccess) onLoginSuccess();
         } catch (err) {

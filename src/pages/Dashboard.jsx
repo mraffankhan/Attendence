@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { BookOpen, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { BookOpen, Calendar, Clock, CheckCircle, AlertCircle, TrendingUp, Award, Activity, UserCheck } from 'lucide-react';
 
 const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [coursesStats, setCoursesStats] = useState([]);
     const [overallStat, setOverallStat] = useState(0);
     const [recentClasses, setRecentClasses] = useState([]);
+    const [userName, setUserName] = useState('Student');
+
+    const [activeSession, setActiveSession] = useState(null);
+    const [msg, setMsg] = useState(null);
 
     useEffect(() => {
         fetchDashboardData();
@@ -17,12 +21,19 @@ const Dashboard = () => {
             const { data } = await api.get('/users/dashboard');
             const { enrollments, attendanceData } = data;
 
+            // Check for active session
+            try {
+                // Using a silent check to see if an active session exists for current student class
+                await api.post('/attendance/self-mark', {});
+            } catch (e) {
+                // Silent catch: common when no session is active
+            }
+
             if (!enrollments || enrollments.length === 0) {
                 setLoading(false);
                 return;
             }
 
-            // Calculate stats
             let totalClasses = 0;
             let totalPresent = 0;
             const courseMap = {};
@@ -63,7 +74,6 @@ const Dashboard = () => {
                 });
             }
 
-            // Format course stats for rendering
             const formattedStats = Object.values(courseMap).map(c => ({
                 ...c,
                 percentage: c.total === 0 ? 100 : Math.round((c.present / c.total) * 100)
@@ -80,10 +90,15 @@ const Dashboard = () => {
         }
     };
 
-    const getProgressColorClass = (pct) => {
-        if (pct >= 85) return '';
-        if (pct >= 75) return 'warning';
-        return 'danger';
+    const handleSelfMark = async () => {
+        try {
+            const { data } = await api.post('/attendance/self-mark');
+            setMsg({ text: data.message, type: 'success' });
+            fetchDashboardData();
+        } catch (err) {
+            setMsg({ text: err.response?.data?.message || 'No active session found.', type: 'error' });
+        }
+        setTimeout(() => setMsg(null), 3000);
     };
 
     const getStatusColor = (status) => {
@@ -96,121 +111,131 @@ const Dashboard = () => {
     };
 
     if (loading) {
-        return <div className="main-content flex justify-center items-center">Loading dashboard...</div>;
+        return (
+            <div className="main-content flex justify-center items-center">
+                <div className="spinner"></div>
+            </div>
+        );
     }
 
     return (
         <div className="main-content">
             <div className="page-header">
-                <h1 className="page-title">Student Dashboard</h1>
-                <p className="page-description">Welcome back! Here's an overview of your attendance.</p>
+                <div>
+                    <h1 className="page-title">Student Dashboard</h1>
+                    <p className="page-description">Welcome back! Here's your attendance performance overview.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button onClick={handleSelfMark} className="btn btn-primary" style={{ background: 'var(--success-color)' }}>
+                        <UserCheck size={16} /> Mark My Presence
+                    </button>
+                </div>
             </div>
 
-            <div className="dashboard-grid">
-                {/* LEFT SIDE: Course Wise Attendance */}
-                <div className="flex flex-col gap-4">
-                    <div className="card h-full">
-                        <div className="flex items-center gap-2 mb-6">
-                            <BookOpen size={20} className="text-primary" style={{ color: 'var(--primary-color)' }} />
-                            <h3 style={{ margin: 0 }}>Course-wise Attendance</h3>
-                        </div>
+            {msg && (
+                <div className={`toast toast-${msg.type}`} style={{ marginBottom: '1.5rem' }}>
+                    {msg.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                    {msg.text}
+                </div>
+            )}
 
-                        {coursesStats.length === 0 ? (
-                            <p className="text-secondary text-sm">You are not enrolled in any courses yet.</p>
-                        ) : (
-                            <div className="flex flex-col gap-5">
-                                {coursesStats.map(course => (
-                                    <div key={course.id}>
-                                        <div className="flex justify-between items-end mb-1">
-                                            <div>
-                                                <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>{course.code}</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                    {course.name}
-                                                </div>
-                                            </div>
-                                            <div style={{ fontWeight: 600, fontSize: '1.1rem', color: course.percentage < 75 ? 'var(--error-color)' : '' }}>
-                                                {course.percentage}%
-                                            </div>
-                                        </div>
-                                        <div className="attendance-progress">
-                                            <div
-                                                className={`attendance-progress-bar ${getProgressColorClass(course.percentage)}`}
-                                                style={{ width: `${course.percentage}%` }}
-                                            />
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', textAlign: 'right' }}>
-                                            {course.present} / {course.total} classes attended
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div className="stat-card">
+                    <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary-color)' }}>
+                        <BookOpen size={24} />
+                    </div>
+                    <div className="stat-info">
+                        <h4>{coursesStats.length}</h4>
+                        <p>Enrolled Courses</p>
                     </div>
                 </div>
-
-                {/* RIGHT SIDE: Overall & Recent */}
-                <div className="flex flex-col gap-6">
-                    <div className="card">
-                        <h3>Overall Attendance</h3>
-                        <div className="mt-4 flex flex-responsive items-center gap-6">
-                            <div className="flex items-center justify-center rounded-full" style={{
-                                width: 100, height: 100,
-                                border: `6px solid ${overallStat >= 85 ? 'var(--success-color)' : overallStat >= 75 ? 'var(--warning-color)' : 'var(--error-color)'}`,
-                                flexShrink: 0
-                            }}>
-                                <span style={{ fontSize: '1.8rem', fontWeight: 700 }}>{overallStat}%</span>
-                            </div>
-                            <div>
-                                <h4 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>
-                                    {overallStat >= 85 ? 'Great job!' : overallStat >= 75 ? 'Needs Improvement' : 'Critical Warning'}
-                                </h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                    {overallStat === 100 ? 'You have perfect attendance. Keep it up!'
-                                        : `Your overall attendance across all courses is ${overallStat}%.`}
-                                </p>
-                            </div>
-                        </div>
+                <div className="stat-card">
+                    <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success-color)' }}>
+                        <TrendingUp size={24} />
                     </div>
+                    <div className="stat-info">
+                        <h4>{overallStat}%</h4>
+                        <p>Total Attendance</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning-color)' }}>
+                        <Award size={24} />
+                    </div>
+                    <div className="stat-info">
+                        <h4>{overallStat >= 85 ? 'Excellent' : overallStat >= 75 ? 'Good' : 'At Risk'}</h4>
+                        <p>Performance Rank</p>
+                    </div>
+                </div>
+            </div>
 
-                    <div className="card flex-1">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Clock size={20} className="text-primary" style={{ color: 'var(--primary-color)' }} />
-                            <h3 style={{ margin: 0 }}>Recent Classes</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
+                <div className="card">
+                    <div className="section-header">
+                        <h3 className="section-title"><Activity size={18} /> Course-wise Breakdown</h3>
+                    </div>
+                    
+                    {coursesStats.length === 0 ? (
+                        <div className="empty-state">
+                            <p>You are not enrolled in any courses yet.</p>
                         </div>
-
-                        {recentClasses.length === 0 ? (
-                            <p className="page-description mt-2 text-sm">No recent classes recorded in your history.</p>
-                        ) : (
-                            <div className="flex flex-col gap-3">
-                                {recentClasses.map((rc, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-md" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <div className="flex items-start gap-3">
-                                            <div style={{ marginTop: '2px' }}>
-                                                {rc.status === 'present' ? <CheckCircle size={16} color="var(--success-color)" /> :
-                                                    rc.status === 'late' ? <Clock size={16} color="var(--warning-color)" /> :
-                                                        <AlertCircle size={16} color="var(--error-color)" />}
-                                            </div>
-                                            <div>
-                                                <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>{rc.courseName}</div>
-                                                <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                                                    <Calendar size={12} /> {new Date(rc.date).toLocaleDateString()}
-                                                </div>
-                                            </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            {coursesStats.map(course => (
+                                <div key={course.id} className="glass-panel">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                        <div>
+                                            <h4 style={{ margin: 0, fontSize: '1rem' }}>{course.name}</h4>
+                                            <span className="badge badge-blue" style={{ marginTop: '0.4rem', fontSize: '0.7rem' }}>{course.code}</span>
                                         </div>
-                                        <div style={{
-                                            padding: '0.25rem 0.6rem',
-                                            borderRadius: '12px',
-                                            fontSize: '0.7rem',
-                                            fontWeight: 600,
-                                            textTransform: 'uppercase',
-                                            backgroundColor: `${getStatusColor(rc.status)}20`,
-                                            color: getStatusColor(rc.status)
-                                        }}>
-                                            {rc.status}
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: course.percentage < 75 ? 'var(--error-color)' : 'white' }}>{course.percentage}%</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{course.present} / {course.total} Sessions</div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                    <div style={{ height: '8px', background: 'var(--surface-color-light)', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{ 
+                                            height: '100%', 
+                                            width: `${course.percentage}%`, 
+                                            background: course.percentage < 75 ? 'var(--error-color)' : course.percentage < 85 ? 'var(--warning-color)' : 'var(--primary-color)',
+                                            transition: 'width 1s ease-out'
+                                        }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="card">
+                    <div className="section-header">
+                        <h3 className="section-title"><Clock size={18} /> Recent History</h3>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {recentClasses.length === 0 ? (
+                            <p className="text-secondary text-sm">No recent attendance history.</p>
+                        ) : (
+                            recentClasses.map((rc, idx) => (
+                                <div key={idx} className="roster-item" style={{ padding: '0.75rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ color: getStatusColor(rc.status) }}>
+                                            {rc.status === 'present' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500 }}>{rc.courseName}</p>
+                                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{new Date(rc.date).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <span className="badge" style={{ 
+                                        background: `${getStatusColor(rc.status)}15`, 
+                                        color: getStatusColor(rc.status),
+                                        fontSize: '0.7rem',
+                                        textTransform: 'capitalize'
+                                    }}>
+                                        {rc.status}
+                                    </span>
+                                </div>
+                            ))
                         )}
                     </div>
                 </div>

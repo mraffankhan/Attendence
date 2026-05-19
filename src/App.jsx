@@ -8,8 +8,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
 import CameraMonitor from './pages/CameraMonitor';
+import TimetableView from './pages/TimetableView';
 
 // Super Admin Pages
+import SuperAdminDashboardPage from './pages/superadmin/Dashboard';
 import ManageUsers from './pages/superadmin/ManageUsers';
 import Timetable from './pages/superadmin/Timetable';
 
@@ -59,7 +61,12 @@ function App() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Initializing AIAttend…</p>
+      </div>
+    );
   }
 
   // Passing setSession down so Login can update Auth State immediately
@@ -81,7 +88,7 @@ function App() {
         <Routes>
           {(role === 'super_admin' || role === 'admin') ? (
             <>
-              <Route path="/superadmin/dashboard" element={<div className="main-content"><div className="page-header"><h1 className="page-title">System Overview</h1><p className="page-description">Welcome to the core system controls.</p></div></div>} />
+              <Route path="/superadmin/dashboard" element={<SuperAdminDashboardPage />} />
               <Route path="/superadmin/users" element={<ManageUsers />} />
               <Route path="/superadmin/timetable" element={<Timetable />} />
               <Route path="/superadmin/courses" element={<Courses role="super_admin" />} />
@@ -92,12 +99,14 @@ function App() {
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/monitor" element={<CameraMonitor />} />
               <Route path="/admin/courses" element={<Courses role="teacher" /> } />
+              <Route path="/admin/timetable" element={<TimetableView />} />
               <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </>
           ) : (
             <>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/courses" element={<Courses role="student" />} />
+              <Route path="/timetable" element={<TimetableView />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </>
           )}

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Camera, LayoutDashboard, Menu as MenuIcon, Users, LogOut, Settings } from 'lucide-react';
+import { Camera, LayoutDashboard, Menu as MenuIcon, Users, LogOut, Settings, Calendar as CalendarIcon } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 const AdminSidebar = ({ user, handleLogout, isOpen, toggleSidebar }) => {
@@ -43,6 +43,13 @@ const AdminSidebar = ({ user, handleLogout, isOpen, toggleSidebar }) => {
                 >
                     <Users size={20} />
                     <span>Students</span>
+                </NavLink>
+                <NavLink
+                    to="/admin/timetable"
+                    className={({ isActive }) => isActive ? `${styles.navItem} ${styles.active}` : styles.navItem}
+                >
+                    <CalendarIcon size={20} />
+                    <span>Timetable</span>
                 </NavLink>
             </nav>
 
