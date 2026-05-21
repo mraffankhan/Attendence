@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import api from './lib/api';
+import { Menu, Camera } from 'lucide-react';
 
 // Pages
 import Login from './pages/Login';
@@ -77,6 +78,19 @@ function App() {
   return (
     <Router>
       <div className="app-layout">
+        {/* Mobile Header */}
+        <div className="mobile-header">
+          <div className="mobile-logo">
+            <Camera size={24} color="var(--primary-color)" /> AIAttend
+          </div>
+          <button onClick={toggleSidebar} className="mobile-toggle-btn">
+            <Menu size={24} />
+          </button>
+        </div>
+
+        {/* Sidebar Backdrop Overlay */}
+        <div className={`sidebar-backdrop ${isSidebarOpen ? 'active' : ''}`} onClick={toggleSidebar}></div>
+
         {(role === 'super_admin' || role === 'admin') ? (
           <SuperAdminSidebar user={session.user} handleLogout={handleLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
         ) : role === 'teacher' ? (

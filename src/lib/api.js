@@ -1,4 +1,4 @@
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+let baseURL = import.meta.env.VITE_API_URL || '/api';
 
 const customFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');

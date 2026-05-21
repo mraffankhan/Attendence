@@ -139,7 +139,7 @@ const Dashboard = () => {
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div className="grid grid-cols-3" style={{ marginBottom: '2rem' }}>
                 <div className="stat-card">
                     <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary-color)' }}>
                         <BookOpen size={24} />
@@ -169,7 +169,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
+            <div className="grid lg-grid-cols-2">
                 <div className="card">
                     <div className="section-header">
                         <h3 className="section-title"><Activity size={18} /> Course-wise Breakdown</h3>

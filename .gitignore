@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Flutter / Dart
+attendance_app_mobile/build/
+attendance_app_mobile/.dart_tool/
+.env

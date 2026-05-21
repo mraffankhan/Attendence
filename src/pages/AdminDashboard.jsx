@@ -95,7 +95,7 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
+            <div className="grid lg-grid-cols-2">
                 <div className="card">
                     <div className="section-header">
                         <h3 className="section-title"><Clock size={18} /> Today's Schedule</h3>
